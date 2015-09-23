@@ -262,7 +262,7 @@ public class SparqlInputCollectorBuilder implements DiscouInputCollectorBuilder 
 				});
 			}
 		}
-		logger.info("{} resources", resources.values().size());
+		logger.debug("{} resources", resources.values().size());
 		return new DiscouInputCollector() {
 			private Iterator<DiscouInputResource> collection = Collections.unmodifiableCollection(resources.values()).iterator();
 
@@ -276,7 +276,7 @@ public class SparqlInputCollectorBuilder implements DiscouInputCollectorBuilder 
 
 			public boolean hasNext() {
 				boolean r = collection.hasNext();
-				logger.info("Iterator {}", r);
+				logger.trace("hasNext {}", r);
 				return r;
 			}
 		};

@@ -60,13 +60,18 @@ public class DiscouIndexer {
 	private File urisIndex;
 	private File annotationsIndex; // local cache of entities extracted from
 									// text
-	private String dbpediaSoptlightServiceUrl = "http://spotlight.dbpedia.org/rest/annotate"; // default
+	private String dbpediaSoptlightServiceUrl = null; // default
 																								// location
 
 	public DiscouIndexer(File indexHome) {
+		this(indexHome, "http://spotlight.dbpedia.org/rest/annotate");
+	}
+
+	public DiscouIndexer(File indexHome, String dbpediaSpotlightEndpoint) {
 		this.resourceIndex = new File(indexHome, _SpotLightedWebResourceIndexPath);
 		this.urisIndex = new File(indexHome, _dbpediaURIindexPath);
 		this.annotationsIndex = new File(indexHome, _SpotlightAnnotationIndexPath);
+		this.dbpediaSoptlightServiceUrl = dbpediaSpotlightEndpoint;
 	}
 
 	// public DiscouIndexer(File indexHome) {
@@ -150,8 +155,8 @@ public class DiscouIndexer {
 
 	private String extractEntitiesFieldValue(String text) {
 
-		if(text.trim().equals("")){
-			logger.warn("Text is empty. We do not attempt to extract entities, returning empty string.");
+		if(text.trim().length() == 0){
+			logger.debug("Text is empty.");
 			return "";
 		}
 		List<SpotlightAnnotation> annotations = getAnnotations(text);
@@ -180,7 +185,7 @@ public class DiscouIndexer {
 	}
 
 	protected List<SpotlightAnnotation> xmlTextToSpotlightAnnotationList(String xml) {
-		logger.debug("reading {}", xml);
+		logger.trace("Reading {}", xml);
 		List<SpotlightAnnotation> annotations;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		try {
@@ -204,20 +209,21 @@ public class DiscouIndexer {
 		logger.trace("executeNER {}", text);
 		double confidence = 0.2;
 		int support = 0;
+		long sss; // service response time check
 		String result = "";
 		try {
 
 			// URL connection channel.
 			HttpURLConnection urlConn;
-			String querystring = "text=" + URLEncoder.encode(text, "UTF-8") + "&confidence=" + confidence + "&support=" + support;
+			String querystring = new StringBuilder().append("text=").append( URLEncoder.encode(text, "UTF-8") ).append( "&confidence=" ).append( confidence ).append( "&support=" ).append( support).toString();
 			// 8192 bytes as max URL length
-			boolean doPost = false;
+			boolean doPost = true; // XXX We always do a HTTP POST
 
 			if (getDBPediaSpotlightServiceURL().getBytes().length + querystring.getBytes().length > 8192) {
 				doPost = true;
 			}
 
-			if (true) {
+			if (doPost) { 
 				urlConn = (HttpURLConnection) new URL(getDBPediaSpotlightServiceURL()).openConnection();
 
 				// Let the run-time system (RTS) know that we want input.
@@ -237,17 +243,17 @@ public class DiscouIndexer {
 				printout.writeBytes(querystring);
 				printout.flush();
 				printout.close();
+			} else {
+				// Do GET
+				urlConn = (HttpURLConnection) new
+						URL(getDBPediaSpotlightServiceURL() + '?' + querystring
+						).openConnection();
+				urlConn.setRequestProperty("Accept", "text/xml");
 			}
-			// else {
-			// urlConn = (HttpURLConnection) new
-			// URL(getDBPediaSpotlightServiceURL() + '?' + querystring
-			// ).openConnection();
-			// urlConn.setRequestProperty("Accept", "text/xml");
-			// }
-			long sss = System.currentTimeMillis();
+			sss = System.currentTimeMillis();
 			// Get response data.
 			BufferedReader input = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
-			logger.info("spotlight input stream obtained in {}ms", (System.currentTimeMillis() - sss));
+			sss = (System.currentTimeMillis() - sss);
 			String line;
 			String test = "";
 			boolean httpHeader = true;
@@ -296,13 +302,15 @@ public class DiscouIndexer {
 			// force close and reopen
 			annotationsIW.close();
 			annotationsIW = open(annotationsIndex);
-			logger.debug("Cached annotations (xml text) {}", textId);
+			logger.debug("Annotations have been cached (xml) {}", textId);
 		} catch (IOException e) {
 			logger.error("Failed executeNER", e);
 			return Collections.emptyList();
 		}
 
-		return xmlTextToSpotlightAnnotationList(result);
+		List<SpotlightAnnotation> a = xmlTextToSpotlightAnnotationList(result);
+		logger.info("{} entities in {} bytes. Response in {}ms", new Object[]{Integer.toString(a.size()), Integer.toString(text.getBytes().length), Long.toString(sss)});
+		return a;
 	}
 
 	public String getDBPediaSpotlightServiceURL() {

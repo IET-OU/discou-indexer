@@ -71,6 +71,25 @@
 							<finalName>discou-videofinder-indexer</finalName>
 						</configuration>
 					</execution>
+					<execution>
+						<id>make-vle-assembly</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<archive>
+								<manifest>
+									<mainClass>uk.ac.open.kmi.discou.vle.VLEIndexer</mainClass>
+								</manifest>
+							</archive>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<appendAssemblyId>false</appendAssemblyId>
+							<finalName>discou-vle-indexer</finalName>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
