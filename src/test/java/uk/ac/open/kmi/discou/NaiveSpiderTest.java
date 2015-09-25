@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import uk.ac.open.kmi.discou.sources.NaiveSpider;
 public class NaiveSpiderTest {
 	private Logger log = LoggerFactory.getLogger(NaiveSpiderTest.class);
 
+	@Ignore("requires http connection")
 	@Test
 	public void test() {
 		final String ol = "http://www.open.edu/openlearn/history-the-arts/culture/literature-and-creative-writing/literature/christopher-marlowe-doctor-faustus/content-section-0";

@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.open.kmi.discou.videofinder.VideofinderInputCollectorBuilder;
 
+@Ignore("requires http connection")
 public class VideofinderIndexingTest {
 	private static Logger logger = LoggerFactory.getLogger(VideofinderIndexingTest.class);
 	private static URL testdir = VideofinderIndexingTest.class.getClassLoader().getResource(".");

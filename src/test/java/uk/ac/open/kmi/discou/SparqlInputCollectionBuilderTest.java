@@ -1,12 +1,14 @@
 package uk.ac.open.kmi.discou;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore("requires http connection")
 public class SparqlInputCollectionBuilderTest {
 
 	private static Logger logger = LoggerFactory.getLogger(SparqlInputCollectionBuilderTest.class);

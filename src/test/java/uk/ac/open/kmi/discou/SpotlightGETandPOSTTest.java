@@ -24,6 +24,7 @@ import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 
+@Ignore("requires http connection")
 public class SpotlightGETandPOSTTest {
 	private static Logger logger = LoggerFactory.getLogger(SpotlightGETandPOSTTest.class);
 	static File testdir;

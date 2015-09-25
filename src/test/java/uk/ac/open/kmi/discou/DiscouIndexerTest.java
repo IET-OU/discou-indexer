@@ -10,6 +10,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -118,36 +119,7 @@ public class DiscouIndexerTest {
 		logger.info("end {}", name.getMethodName());
 	}
 
-	/*
-	 * @Test public void testLegacy(){ String uri =
-	 * "http://data.open.ac.uk/openlearn/aa100_1"; logger.info("indexing {}",
-	 * uri); Query query =
-	 * QueryFactory.create("select distinct ?t ?d ?u where {" + "<" + uri +
-	 * "> <http://purl.org/dc/terms/title> ?t. " + "<" + uri +
-	 * "> <http://purl.org/dc/terms/description> ?d." + "<" + uri +
-	 * "> <http://purl.org/dc/terms/description> ?u" + "}"); QueryExecution qe =
-	 * QueryExecutionFactory.sparqlService("http://data.open.ac.uk/sparql",
-	 * query); ResultSet rs = qe.execSelect(); WebResource ir = null; if
-	 * (rs.hasNext()) { QuerySolution qs = rs.next(); final String title =
-	 * qs.getLiteral("t").getString(); final String description =
-	 * qs.getLiteral("d").getString(); final String content =
-	 * qs.getLiteral("u").getString();
-	 * logger.info("\n\turi: {}\n\ttitle: {}\n\tdescription: {}\n\tcontent: {}",
-	 * new Object[]{uri, title, description, content}); ir = new
-	 * WebResource(uri, title, description, content); } qe.close();
-	 * Assert.assertNotNull(ir); double confidence = 0.2; int support = 0; //
-	 * this is porn coding... ProcessingWebResource md = new
-	 * ProcessingWebResource(new File(index.getAbsolutePath() ,
-	 * DiscouIndexer._SpotlightAnnotationIndexPath).getAbsolutePath(), new
-	 * File(index.getAbsolutePath() ,
-	 * DiscouIndexer._dbpediaURIindexPath).getAbsolutePath(), new
-	 * File(index.getAbsolutePath() ,
-	 * DiscouIndexer._SpotLightedWebResourceIndexPath).getAbsolutePath());
-	 * 
-	 * SpotLightedWebResource sledWR = md.spotLightingSingleWebResource(ir,
-	 * confidence, support); }
-	 */
-
+	@Ignore("requires http connection")
 	@Test
 	public void testOneResource() throws IOException {
 		logger.info("start {}", name.getMethodName());
@@ -198,13 +170,14 @@ public class DiscouIndexerTest {
 		logger.info("end {}", name.getMethodName());
 	}
 
+	@Ignore("requires http connection")
 	@Test
 	public void testMultiResource() throws IOException {
 
 		logger.info("start {}", name.getMethodName());
 
 		Query query = QueryFactory.create("select distinct ?x ?t ?d ?u from <http://data.open.ac.uk/context/openlearn> where {"
-				+ "?x <http://purl.org/dc/terms/title> ?t ; <http://purl.org/dc/terms/description> ?d ; <http://purl.org/dc/terms/description> ?u" + "} limit 10");
+				+ "?x <http://purl.org/dc/terms/title> ?t ; <http://purl.org/dc/terms/description> ?d ; <http://purl.org/dc/terms/description> ?u" + "} limit 2");
 		QueryExecution qe = QueryExecutionFactory.sparqlService("http://data.open.ac.uk/sparql", query);
 		ResultSet rs = qe.execSelect();
 		DiscouInputResource ir = null;

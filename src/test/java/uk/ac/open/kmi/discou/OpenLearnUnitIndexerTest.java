@@ -10,6 +10,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.open.kmi.discou.sources.OpenLearnExploreScraper;
 import uk.ac.open.kmi.discou.sources.OpenLearnUnitScraper;
 
+@Ignore("requires http connection")
 public class OpenLearnUnitIndexerTest {
 
 	public static final Logger logger = LoggerFactory.getLogger(OpenLearnUnitIndexerTest.class);
@@ -69,6 +71,7 @@ public class OpenLearnUnitIndexerTest {
 		logger.info("cleanup test dir: {}", deleteDir(index));
 	}
 
+	@Ignore("requires http connection")
 	@Test
 	public void singleUnit() {
 		logger.info("start {}", name.getMethodName());

@@ -33,7 +33,7 @@ public class zipUtil {
 	        int nread;
 	        String result = "";
 	        byte[] bytes = new byte[1024];
-	        //Si cicla finch� ci sono byte disponibili
+	        //Si cicla finch  ci sono byte disponibili
 	        while(gzipStream.available()>0){
 	            //Lettura dei byte con inserimento nel buffer
 	            nread = gzipStream.read(bytes);

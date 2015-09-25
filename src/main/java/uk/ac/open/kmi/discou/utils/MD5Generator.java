@@ -34,7 +34,7 @@ public class MD5Generator {
 	    * @throws UnsupportedEncodingException
 	    */
 	   public static String getMD5(String text)
-	   throws NoSuchAlgorithmException, UnsupportedEncodingException  {
+	   throws NoSuchAlgorithmException, UnsupportedEncodingException, IllegalArgumentException  {
 	       MessageDigest md;
 	       md = MessageDigest.getInstance("MD5");
 	       byte[] md5hash = new byte[32];

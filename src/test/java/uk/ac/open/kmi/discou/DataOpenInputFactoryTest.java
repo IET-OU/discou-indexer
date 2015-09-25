@@ -1,6 +1,7 @@
 package uk.ac.open.kmi.discou;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -15,6 +16,7 @@ public class DataOpenInputFactoryTest {
 	@Rule
 	public TestName name = new TestName();
 
+	@Ignore("requires http connection")
 	@Test
 	public void openlearn() {
 		logger.info("Running {}", name.getMethodName());

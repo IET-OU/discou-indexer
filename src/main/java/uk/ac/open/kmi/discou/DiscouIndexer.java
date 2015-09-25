@@ -1,22 +1,12 @@
 package uk.ac.open.kmi.discou;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -39,10 +29,10 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import uk.ac.open.kmi.discou.spotlight.SpotlightAnnotation;
+import uk.ac.open.kmi.discou.spotlight.SpotlightClient;
+import uk.ac.open.kmi.discou.spotlight.SpotlightResponse;
 import uk.ac.open.kmi.discou.utils.MD5Generator;
 import uk.ac.open.kmi.discou.utils.zipUtil;
 
@@ -61,7 +51,7 @@ public class DiscouIndexer {
 	private File annotationsIndex; // local cache of entities extracted from
 									// text
 	private String dbpediaSoptlightServiceUrl = null; // default
-																								// location
+														// location
 
 	public DiscouIndexer(File indexHome) {
 		this(indexHome, "http://spotlight.dbpedia.org/rest/annotate");
@@ -124,25 +114,48 @@ public class DiscouIndexer {
 	}
 
 	public void put(DiscouInputResource resource) throws IOException {
+		put(resource.getUri(), resource.getTitle(), resource.getDescription(), resource.getContent());
+	}
 
-		String uri = resource.getUri();
+	public void put(String uri, String title, String description, String content) throws IOException {
+		putRaw(uri,
+				extractEntitiesFieldValue(title),
+				extractEntitiesFieldValue(description),
+				extractEntitiesFieldValue(content));
+	}
+
+	private String _join(String[] arr) {
+		StringBuilder builder = new StringBuilder();
+		for (String s : arr) {
+			builder.append(s);
+		}
+		return builder.toString();
+	}
+
+	public void putRaw(String uri, String[] entitiesInTitle, String[] entitiesInDescription, String[] entitiesInContent) throws IOException {
+		putRaw(uri, _join(entitiesInTitle), _join(entitiesInDescription), _join(entitiesInContent));
+	}
+
+	/**
+	 * This methods writes an entry in the index.
+	 * 
+	 * @param uri - identifier of the resource
+	 * @param titleEntities - a space separate list of entities, each repeated according to its relevance
+	 * @param descriptionEntities - same as above
+	 * @param contentEntities - same as above
+	 * @throws IOException - in case an IO problem occurs
+	 */
+	public void putRaw(String uri, String titleEntities, String descriptionEntities, String contentEntities) throws IOException {
 		logger.info("Put {}", uri);
-		// extract entities from title
-		String title = extractEntitiesFieldValue(resource.getTitle());
-		// extract entities from description
-		String description = extractEntitiesFieldValue(resource.getDescription());
-		// extract entities from content
-		String content = extractEntitiesFieldValue(resource.getContent());
-		//
 		Document doc = new Document();
 		logger.trace("uri: {}", uri);
-		logger.trace("title: {}", title);
-		logger.trace("description", description);
-		logger.trace("content: {}", content);
+		logger.trace("title: {}", titleEntities);
+		logger.trace("description", descriptionEntities);
+		logger.trace("content: {}", contentEntities);
 		doc.add(new Field("SpotLightedWebResourceURI", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
-		doc.add(new Field("SpotLightedWebResourceText", title, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
-		doc.add(new Field("SpotLightedWebResourceDescription", description, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
-		doc.add(new Field("SpotLightedWebResourceContent", content, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
+		doc.add(new Field("SpotLightedWebResourceText", titleEntities, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
+		doc.add(new Field("SpotLightedWebResourceDescription", descriptionEntities, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
+		doc.add(new Field("SpotLightedWebResourceContent", contentEntities, Field.Store.YES, Field.Index.ANALYZED, TermVector.YES));
 		resourcesIW.addDocument(doc);
 	}
 
@@ -153,9 +166,9 @@ public class DiscouIndexer {
 		}
 	}
 
-	private String extractEntitiesFieldValue(String text) {
+	public String extractEntitiesFieldValue(String text) {
 
-		if(text.trim().length() == 0){
+		if (text.trim().length() == 0) {
 			logger.debug("Text is empty.");
 			return "";
 		}
@@ -184,28 +197,7 @@ public class DiscouIndexer {
 		return scoredTextBuilder.toString();
 	}
 
-	protected List<SpotlightAnnotation> xmlTextToSpotlightAnnotationList(String xml) {
-		logger.trace("Reading {}", xml);
-		List<SpotlightAnnotation> annotations;
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		try {
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			org.w3c.dom.Document dom = db.parse(new ByteArrayInputStream(xml.getBytes("UTF-8")));
-			NodeList nl = dom.getElementsByTagName("Resource");
-			annotations = new ArrayList<SpotlightAnnotation>();
-			for (int i = 0; i < nl.getLength(); ++i) {
-				Node n = nl.item(i);
-				// XXX Where to get the confidence parameter
-				SpotlightAnnotation annotation = new SpotlightAnnotation(n, 0.2);
-				annotations.add(annotation);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		return annotations;
-	}
-
-	private List<SpotlightAnnotation> executeNER(String text) {
+	private List<SpotlightAnnotation> executeNER(String textId, String text) {
 		logger.trace("executeNER {}", text);
 		double confidence = 0.2;
 		int support = 0;
@@ -213,76 +205,10 @@ public class DiscouIndexer {
 		String result = "";
 		try {
 
-			// URL connection channel.
-			HttpURLConnection urlConn;
-			String querystring = new StringBuilder().append("text=").append( URLEncoder.encode(text, "UTF-8") ).append( "&confidence=" ).append( confidence ).append( "&support=" ).append( support).toString();
-			// 8192 bytes as max URL length
-			boolean doPost = true; // XXX We always do a HTTP POST
-
-			if (getDBPediaSpotlightServiceURL().getBytes().length + querystring.getBytes().length > 8192) {
-				doPost = true;
-			}
-
-			if (doPost) { 
-				urlConn = (HttpURLConnection) new URL(getDBPediaSpotlightServiceURL()).openConnection();
-
-				// Let the run-time system (RTS) know that we want input.
-				urlConn.setDoInput(true);
-				// Let the RTS know that we want to do output.
-				urlConn.setDoOutput(true);
-				// No caching, we want the real thing.
-				urlConn.setUseCaches(false);
-				// Request method
-				urlConn.setRequestMethod("POST");
-				// Specify the content type.
-				urlConn.setRequestProperty("Accept", "text/xml");
-
-				// Send POST output.
-				DataOutputStream printout = new DataOutputStream(urlConn.getOutputStream());
-
-				printout.writeBytes(querystring);
-				printout.flush();
-				printout.close();
-			} else {
-				// Do GET
-				urlConn = (HttpURLConnection) new
-						URL(getDBPediaSpotlightServiceURL() + '?' + querystring
-						).openConnection();
-				urlConn.setRequestProperty("Accept", "text/xml");
-			}
-			sss = System.currentTimeMillis();
-			// Get response data.
-			BufferedReader input = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
-			sss = (System.currentTimeMillis() - sss);
-			String line;
-			String test = "";
-			boolean httpHeader = true;
-			while ((line = input.readLine()) != null) {
-				if (httpHeader) {
-					if (line.length() > 5) {
-						test = line.substring(0, 5);
-					}
-					if (test.equals("<?xml")) {
-						httpHeader = false;
-						result = result + line;
-					}
-				} else {
-					result = result + line;
-				}
-			}
-
-			input.close();
-
-			// cache result
-
-			String textId;
-			try {
-				textId = MD5Generator.getMD5(text);
-			} catch (NoSuchAlgorithmException e) {
-				throw new RuntimeException(e);
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
+			SpotlightClient c = new SpotlightClient(getDBPediaSpotlightServiceURL());
+			SpotlightResponse response = c.perform(text, confidence, support);
+			sss = response.getMilliseconds();
+			result = response.getXml();
 			Document doc = new Document();
 			// Add code to compress the resultTextXml string
 			zipUtil zU = new zipUtil();
@@ -303,13 +229,13 @@ public class DiscouIndexer {
 			annotationsIW.close();
 			annotationsIW = open(annotationsIndex);
 			logger.debug("Annotations have been cached (xml) {}", textId);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.error("Failed executeNER", e);
 			return Collections.emptyList();
 		}
 
-		List<SpotlightAnnotation> a = xmlTextToSpotlightAnnotationList(result);
-		logger.info("{} entities in {} bytes. Response in {}ms", new Object[]{Integer.toString(a.size()), Integer.toString(text.getBytes().length), Long.toString(sss)});
+		List<SpotlightAnnotation> a = SpotlightClient.toList(result);
+		logger.info("{} entities in {} bytes. Response in {}ms", new Object[] { Integer.toString(a.size()), Integer.toString(text.getBytes().length), Long.toString(sss) });
 		return a;
 	}
 
@@ -323,15 +249,21 @@ public class DiscouIndexer {
 	}
 
 	protected List<SpotlightAnnotation> getAnnotations(String text) {
+		
 		List<SpotlightAnnotation> annotations = null;
 		// entities extracted from text are cached in index annotationsIndex
 		String textId;
 		try {
 			textId = MD5Generator.getMD5(text);
 		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
+			logger.error("", e);
+			return Collections.emptyList();
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			logger.error("", e);
+			return Collections.emptyList();
+		}catch (IllegalArgumentException e) {
+			logger.error("", e);
+			return Collections.emptyList();
 		}
 
 		// check if the text is in the annotations' cache
@@ -352,7 +284,7 @@ public class DiscouIndexer {
 				String TextXml = d.get("TextXml");
 				zipUtil zU = new zipUtil();
 				String decoded = zU.gzipStringDecode(TextXml);
-				annotations = xmlTextToSpotlightAnnotationList(decoded);
+				annotations = SpotlightClient.toList(decoded);
 			}
 		} catch (IndexNotFoundException e) {
 			logger.warn("Index does not exists :(");
@@ -365,7 +297,7 @@ public class DiscouIndexer {
 		} finally {
 			if (indexSearcher != null) {
 				try {
-					//indexSearcher.close();
+					// indexSearcher.close();
 				} catch (Exception e) {
 				}
 			}
@@ -386,7 +318,7 @@ public class DiscouIndexer {
 		} else {
 			try {
 				logger.debug("Extract annotations from remote system");
-				return executeNER(text);
+				return executeNER(textId, text);
 			} catch (Exception e) {
 				logger.error("ERROR", e);
 				return Collections.emptyList();

@@ -2,6 +2,7 @@ package uk.ac.open.kmi.discou;
 
 import org.apache.http.HttpException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.open.kmi.discou.videofinder.VideofinderInputFactory;
 
+@Ignore("requires http connection")
 public class VideofinderInputFactoryTest {
 
 	private static Logger logger = LoggerFactory.getLogger(VideofinderInputFactoryTest.class);
@@ -31,11 +33,12 @@ public class VideofinderInputFactoryTest {
 				logger.error("HTTP Message: {}", he.getMessage());
 
 			}
-			e.printStackTrace();
+			logger.error("",e);
 			Assert.assertTrue(false);
 		}
 	}
 
+	@Ignore
 	@Test
 	public void prepareContent() {
 		logger.info("Running {}", name.getMethodName());
