@@ -32,4 +32,4 @@ try {
 }
 ```
 
-A convenient way of doing it is to setup a project used the (https://github.com/the-open-university/discou-indexer-archetype)[discou-indexer-archetype] maven archetype.
+A convenient way of doing it is to setup a project used the [discou-indexer-archetype](https://github.com/the-open-university/discou-indexer-archetype) maven archetype.
