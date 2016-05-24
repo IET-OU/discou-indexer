@@ -21,7 +21,9 @@ public class DataOpenInputFactory {
 				return sc.getText();
 			};
 		}.endpoint("http://data.open.ac.uk/sparql")
-		.from("http://data.open.ac.uk/context/openlearn")
+		.from("http://data.open.ac.uk/context/openlearn2")
+		.type("http://data.open.ac.uk/openlearn/ontology/OpenCourseware")
+		.type("http://data.open.ac.uk/openlearn/ontology/OpenCourse")
 		.title("http://purl.org/dc/terms/title")
 		.description("http://purl.org/dc/terms/description")
 		.content("http://www.w3.org/TR/2010/WD-mediaont-10-20100608/locator");
@@ -62,7 +64,8 @@ public class DataOpenInputFactory {
 						return sc.getText();
 					};
 				}.endpoint("http://data.open.ac.uk/sparql")
-				.from("http://data.open.ac.uk/context/openlearnexplore")
+				.from("http://data.open.ac.uk/context/openlearn2")
+				.type("http://data.open.ac.uk/openlearn/ontology/OpenLearnArticle")
 				.title("http://purl.org/dc/terms/title")
 				.description("http://purl.org/dc/terms/description")
 				.content("http://www.w3.org/TR/2010/WD-mediaont-10-20100608/locator");
