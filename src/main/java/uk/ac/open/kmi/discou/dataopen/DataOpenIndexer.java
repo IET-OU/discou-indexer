@@ -14,20 +14,22 @@ public class DataOpenIndexer {
 	private DiscouIndexer discouIndexer;
 	private static final Logger log = LoggerFactory.getLogger(DataOpenIndexer.class);
 
-	public DataOpenIndexer(String indexHome) {
-		discouIndexer = new DiscouIndexer(new File(indexHome));
+	public DataOpenIndexer(String indexHome, String spotlight) {
+		discouIndexer = new DiscouIndexer(new File(indexHome), spotlight);
 	}
 
 	public void start(){
 		log.info("Start indexing");
-		DiscouInputCollector openLearnCollector = DataOpenInputFactory.openlearn().build();
+		DiscouInputCollector openLearnCourse = DataOpenInputFactory.openlearnCourse().build();
+		DiscouInputCollector openLearnCourseware = DataOpenInputFactory.openlearnCourseware().build();
 		DiscouInputCollector openLearnExploreCollector = DataOpenInputFactory.openlearnexplore().build();
 		DiscouInputCollector podcastCollector = DataOpenInputFactory.podcast().build();
 		
 		discouIndexer.open();
 		try {
 			discouIndexer.put(openLearnExploreCollector);
-			discouIndexer.put(openLearnCollector);
+			discouIndexer.put(openLearnCourse);
+			discouIndexer.put(openLearnCourseware);
 			discouIndexer.put(podcastCollector);
 		} catch (IOException e) {
 			log.error("",e);
@@ -47,6 +49,10 @@ public class DataOpenIndexer {
 	}
 
 	public static void main(String[] args) throws IOException {
-		new DataOpenIndexer(args[0]).start();
+		if(args.length == 2){
+			new DataOpenIndexer(args[0], args[1]).start();
+		}else{
+			System.err.println("Invalid arguments.");
+		}
 	}
 }

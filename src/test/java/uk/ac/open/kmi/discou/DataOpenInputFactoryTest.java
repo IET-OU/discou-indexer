@@ -20,7 +20,7 @@ public class DataOpenInputFactoryTest {
 	@Test
 	public void openlearn() {
 		logger.info("Running {}", name.getMethodName());
-		SparqlInputCollectorBuilder ic = (SparqlInputCollectorBuilder) DataOpenInputFactory.openlearn();
+		SparqlInputCollectorBuilder ic = (SparqlInputCollectorBuilder) DataOpenInputFactory.openlearnCourse();
 		ic.limit(1);
 		logger.debug("Testing Query: {}", ic.buildQuery());
 		Assert.assertTrue(ic.build().hasNext());
