@@ -33,7 +33,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.9</version>
 				<configuration>
-					<argLine>-Xmx256M -Dhttp.proxyHost=wwwcache.open.ac.uk
+					<argLine>-Xmx1024M -Dhttp.proxyHost=wwwcache.open.ac.uk
 						-Dproxy.port=80</argLine>
 				</configuration>
 			</plugin>

@@ -5,13 +5,16 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class OpenLearnUnitScraper extends NaiveSpider {
 	private String unit = null;
 	private String unitPath;
 	private StringBuilder contentBuilder;
 	private String content = null;
 	private int maxTextLength = -1;
-
+	private final Logger log = LoggerFactory.getLogger(OpenLearnUnitScraper.class);
 	public OpenLearnUnitScraper(String unit) {
 		super(unit);
 		this.unit = unit;
@@ -51,6 +54,7 @@ public class OpenLearnUnitScraper extends NaiveSpider {
 			}
 		} catch (MalformedURLException e) {
 			// not a valid url (javascript?)
+			log.debug("Not a valid URL? <{}>", link);
 		}
 		return false;
 	}

@@ -32,6 +32,7 @@ public class OpenLearnExploreScraper extends NaiveSpider {
 
 	@Override
 	public void process(String html) {
+		log.debug("Processing html");
 		// do nothing
 		Pattern p = Pattern.compile("(?i)<p>(.+)</p>");
 		Matcher m = p.matcher(html);
@@ -43,6 +44,7 @@ public class OpenLearnExploreScraper extends NaiveSpider {
 
 	@Override
 	public boolean follow(String link) {
+		log.debug("Following link {}",link);
 		if (maxTextLength != -1 && contentBuilder.length() > maxTextLength){
 			return false;
 		}

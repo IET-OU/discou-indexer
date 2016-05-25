@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.util.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +86,9 @@ public abstract class NaiveSpider {
 			mLink = pLink.matcher(href);
 			while (mLink.find()) {
 				String link = mLink.group(3);
-				elements.add(link);
+				if(link != null && !"".equals(link)){
+					elements.add(link);
+				}
 			}
 
 		}
@@ -102,33 +106,52 @@ public abstract class NaiveSpider {
 				log.debug("Visiting {}", visit);
 				URL following = new URL(visit);
 				HttpURLConnection uc = (HttpURLConnection) following.openConnection();
-				InputStream is = uc.getInputStream();
-				String theString = getStringFromInputStream(is);
-				// log.debug("HTML: {}", theString);
-				Set<String> links = extractHTMLLinks(theString);
-				boolean found = false;
-				for (String l : links) {
-					// ignore hash links
-					if(l.startsWith("#")){
-						continue;
-					}else if(l.indexOf('#') > -1){
-						l = l.substring(0, l.lastIndexOf('#'));
-					}
-					found = true;
-					if (visited.contains(l) || broken.containsKey(l))
-						continue;
-					// log.info("Link: {}", l);
-					boolean follow = follow(l.toString()); // prints /{item}/
-					if (follow) {
-						tovisit.add(l.toString());
+				uc.setInstanceFollowRedirects(true);
+				
+				int status = uc.getResponseCode();
+				if(status == HttpURLConnection.HTTP_OK){
+					String contentType = uc.getHeaderField("Content-type");
+					log.debug("content-type: {}", contentType);
+					if(contentType.contains("pdf")){
+						PDDocument document = PDDocument.load(uc.getInputStream(), true);
+						PDFTextStripper stripper = new PDFTextStripper("UTF-8");
+						stripper.setForceParsing(true);
+						String res = stripper.getText(document);
+						process(res);
+						document.close();
+					}else if(contentType.contains("html")){
+						InputStream is = uc.getInputStream();
+						String theString = getStringFromInputStream(is);
+						log.trace("HTML: {}", theString);
+						Set<String> links = extractHTMLLinks(theString);
+						boolean found = false;
+						for (String l : links) {
+							// ignore hash links
+							if(l.startsWith("#")){
+								continue;
+							}else if(l.indexOf('#') > -1){
+								l = l.substring(0, l.lastIndexOf('#'));
+							}
+							found = true;
+							if (visited.contains(l) || broken.containsKey(l))
+								continue;
+							boolean follow = follow(l.toString());
+							if (follow) {
+								tovisit.add(l.toString());
+							}
+						}
+						
+						if (!found) {
+							log.debug("No links in {}", visit);
+						}
+						// we pass the html page to the process method
+						process(theString);
+					}else{
+						log.warn("Unsupported content-type: {}", contentType);
 					}
 				}
-				if (!found) {
-					log.debug("No links in {}", visit);
-				}
-				// we pass the html page to the process method
-				process(theString);
 			} catch (Exception e) {
+				log.error("FAILED", e);
 				broken.put(visit, e);
 			}
 		}

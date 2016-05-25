@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.open.kmi.discou.sources.OpenLearnExploreScraper;
 import uk.ac.open.kmi.discou.sources.OpenLearnUnitScraper;
 
-@Ignore("requires http connection")
+//@Ignore("requires http connection")
 public class OpenLearnUnitIndexerTest {
 
 	public static final Logger logger = LoggerFactory.getLogger(OpenLearnUnitIndexerTest.class);
@@ -71,13 +71,13 @@ public class OpenLearnUnitIndexerTest {
 		logger.info("cleanup test dir: {}", deleteDir(index));
 	}
 
-	@Ignore("requires http connection")
+	//@Ignore("requires http connection")
 	@Test
 	public void singleUnit() {
 		logger.info("start {}", name.getMethodName());
 
 		try {
-			DiscouIndexer i = new DiscouIndexer(index);
+			DiscouIndexer i = new DiscouIndexer(index, "http://anne.kmi.open.ac.uk/rest/annotate");
 			Assert.assertTrue(index.exists());
 
 			i.open();
