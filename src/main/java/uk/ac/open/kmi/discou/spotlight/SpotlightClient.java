@@ -19,10 +19,16 @@ import org.w3c.dom.NodeList;
 
 public class SpotlightClient {
 
+	private static final double DEFAULT_CONFIDENCE = 0.5;
+	private static final int DEFAULT_SUPPORT = 0;
 	private String spotlight;
 
 	public SpotlightClient(String spotlight) {
 		this.spotlight = spotlight;
+	}
+
+	public SpotlightResponse perform(String text) throws IOException {
+		return perform(text, DEFAULT_CONFIDENCE, DEFAULT_SUPPORT);
 	}
 
 	public SpotlightResponse perform(String text, double confidence, int support) throws IOException {
@@ -59,9 +65,8 @@ public class SpotlightClient {
 				printout.close();
 			} else {
 				// Do GET
-				urlConn = (HttpURLConnection) new
-						URL(spotlight + '?' + querystring
-						).openConnection();
+				urlConn = (HttpURLConnection) new URL(spotlight + '?' +
+					querystring).openConnection();
 				urlConn.setRequestProperty("Accept", "text/xml");
 			}
 			sss = System.currentTimeMillis();
@@ -102,13 +107,11 @@ public class SpotlightClient {
 		try {
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			org.w3c.dom.Document dom = db.parse(new ByteArrayInputStream(xml.getBytes("UTF-8")));
-			// TODO Where to get the confidence parameter?
-			double confidence = 0.2;
 			NodeList nl = dom.getElementsByTagName("Resource");
 			annotations = new ArrayList<SpotlightAnnotation>();
 			for (int i = 0; i < nl.getLength(); ++i) {
 				Node n = nl.item(i);
-				SpotlightAnnotation annotation = new SpotlightAnnotation(n, confidence);
+				SpotlightAnnotation annotation = new SpotlightAnnotation(n);
 				annotations.add(annotation);
 			}
 		} catch (Exception e) {

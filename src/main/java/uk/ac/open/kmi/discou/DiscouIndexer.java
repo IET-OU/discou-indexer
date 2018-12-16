@@ -249,7 +249,6 @@ public class DiscouIndexer {
 	}
 
 	protected List<SpotlightAnnotation> getAnnotations(String text) {
-		
 		List<SpotlightAnnotation> annotations = null;
 		// entities extracted from text are cached in index annotationsIndex
 		String textId;
